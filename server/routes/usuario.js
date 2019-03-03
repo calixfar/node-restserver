@@ -8,15 +8,16 @@ const _ = require('underscore');
 //Importamos esquema Usuario
 const Usuario = require('../models/usuario');
 
+const { verificarToken, verificarAdmin_Role } = require('../middelwares/autenticacion');
 //Objeto app
 const app = express();
 
 //respuesta get a la ruta {url}/usuario
-app.get('/usuario', function (req, res) {
+app.get('/usuario', verificarToken , (req, res) => {
 
         let desde = Number(req.query.desde) || 0;
         let limite = Number(req.query.limite) || 0;
-        Usuario.find({estado: true}, 'nombre email role img estado google')//Buscar todos, el segundo argumento es para filtrar propiedades
+        Usuario.find({estado: true, role: 'ADMIN_ROLE'}, 'nombre email role img estado google')//Buscar todos, el segundo argumento es para filtrar propiedades
                .skip(desde) // Salta los primeros 5
                .limit(limite) // Limite de la consulta
                .exec(( err, usuarios ) => {
@@ -27,7 +28,7 @@ app.get('/usuario', function (req, res) {
                         })
                     }
                     
-                    Usuario.count({estado: true}, (err, cantidad) =>{
+                    Usuario.count({estado: true, role: 'ADMIN_ROLE'}, (err, cantidad) =>{
                        
                         res.json({
                             ok: true,
@@ -40,7 +41,7 @@ app.get('/usuario', function (req, res) {
   })
   
 //respuesta post a la ruta {url}/usuario
-  app.post('/usuario', function (req, res) {
+  app.post('/usuario', [verificarToken, verificarAdmin_Role], (req, res) => {
         //keys se pasan
       let body = req.body;
         //crear instancia modelo usuario
@@ -68,7 +69,7 @@ app.get('/usuario', function (req, res) {
     
   })
    
-  app.put('/usuario/:id', function (req, res) {
+  app.put('/usuario/:id', [verificarToken, verificarAdmin_Role], (req, res) => {
       let id =  req.params.id;
       //parametros que solo serán actualizados
       let body = _.pick(req.body, [ 'nombre','email','img','role','estado']);
@@ -90,7 +91,7 @@ app.get('/usuario', function (req, res) {
         })
   })
   
-  app.delete('/usuario/:id', function (req, res) {
+  app.delete('/usuario/:id', [verificarToken, verificarAdmin_Role], (req, res) => {
 
     let id = req.params.id;
 
